@@ -128,3 +128,27 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+
+  logstash:
+    depends_on:
+      es:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
+    labels:
+      co.elastic.logs/module: logstash
+    user: root
+    ports:
+      - ${LOGSTASH_PORT}:6000
+    volumes:
+      - ${HOME}/docker/volumes/elastic/cert:/usr/share/logstash/certs
+      - ${HOME}/docker/volumes/elastic/logstashdata:/usr/share/logstash/data
+      - "./logstash/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro"
+      - "./logstash/example.conf:/usr/share/logstash/pipeline/example.conf:ro"
+    environment:
+      - xpack.monitoring.enabled=false
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_HOSTS=https://es:9200
+    mem_limit: ${LS_MEM_LIMIT}
